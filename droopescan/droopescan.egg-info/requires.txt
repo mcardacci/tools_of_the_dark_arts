@@ -1,0 +1,4 @@
+cement>=2.6,<2.6.99
+requests
+pystache
+futures
